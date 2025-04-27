@@ -62,7 +62,7 @@ public class DeviceManager : IDeviceManager
         
         if (!reader.Read())
         { 
-            return null; 
+            throw new ApplicationException("Device not found"); 
         }
 
         var baseId = reader.GetString(0);
@@ -136,6 +136,8 @@ public class DeviceManager : IDeviceManager
     
     public bool CreateDevice(Device device)
     {
+        ValidateDevice(device);
+        
         int countRowsAdd = 0;
 
         using (SqlConnection connection = new SqlConnection(_connectionString))
@@ -152,7 +154,6 @@ public class DeviceManager : IDeviceManager
                     command.Parameters.AddWithValue("@Id", device.ID);
                     command.Parameters.AddWithValue("@Name", device.Name);
                     command.Parameters.AddWithValue("@IsTurnedOn", device.IsTurnedOn);
-                    //command.Parameters.AddWithValue("@DeviceType", device.GetType().Name);
 
                     countRowsAdd += command.ExecuteNonQuery();
                 }
@@ -209,6 +210,8 @@ public class DeviceManager : IDeviceManager
 
     public bool EditDevice(Device device)
     {
+        ValidateDevice(device);
+        
         using SqlConnection connection = new SqlConnection(_connectionString);
         connection.Open();
         
@@ -274,54 +277,66 @@ public class DeviceManager : IDeviceManager
     
     public bool DeleteDevice(string id)
     {
-        using (SqlConnection connection = new SqlConnection(_connectionString))
+        using SqlConnection connection = new SqlConnection(_connectionString);
+        connection.Open();
+        SqlTransaction transaction = connection.BeginTransaction();
+
+        try
         {
-            connection.Open();
-            SqlTransaction transaction = connection.BeginTransaction();
+            string deleteSpecific = @"
+                DELETE FROM Smartwatches WHERE DeviceId = @Id;
+                DELETE FROM PersonalComputers WHERE DeviceId = @Id;
+                DELETE FROM EmbeddedDevices WHERE DeviceId = @Id;";
 
-            try
+            using (SqlCommand command = new SqlCommand(deleteSpecific, connection, transaction))
             {
-                string deviceType = id.StartsWith("SW-") ? "Smartwatch" :
-                    id.StartsWith("P-") ? "PersonalComputer" :
-                    id.StartsWith("ED-") ? "EmbeddedDevice" : null;
-
-                if (deviceType == null)
-                    throw new ArgumentException("Invalid device type prefix.");
-
-                string deleteSpecificInfo = deviceType switch
-                {
-                    "Smartwatch" => "DELETE FROM Smartwatches WHERE Id = @Id",
-                    "PersonalComputer" => "DELETE FROM PersonalComputers WHERE Id = @Id",
-                    "EmbeddedDevice" => "DELETE FROM EmbeddedDevices WHERE Id = @Id",
-                    _ => throw new InvalidOperationException("Unknown device type.")
-                };
-                
-                using (SqlCommand command = new SqlCommand(deleteSpecificInfo, connection, transaction))
-                {
-                    command.Parameters.AddWithValue("@Id", id);
-                    command.ExecuteNonQuery();
-                }
-
-                using (SqlCommand command = new SqlCommand("DELETE FROM Devices WHERE Id = @Id", connection, transaction))
-                {
-                    command.Parameters.AddWithValue("@Id", id);
-                    int rowsAffected = command.ExecuteNonQuery();
-
-                    if (rowsAffected == 0)
-                    {
-                        transaction.Rollback();
-                        return false;
-                    }
-                }
-
-                transaction.Commit();
-                return true;
+                command.Parameters.AddWithValue("@Id", id);
+                command.ExecuteNonQuery();
             }
-            catch
+
+            using (SqlCommand command = new SqlCommand("DELETE FROM Devices WHERE Id = @Id", connection, transaction))
             {
-                transaction.Rollback();
-                throw;
+                command.Parameters.AddWithValue("@Id", id);
+                if (command.ExecuteNonQuery() == 0)
+                {
+                    transaction.Rollback();
+                    return false;
+                }
             }
+
+            transaction.Commit();
+            return true;
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+    
+    private void ValidateDevice(Device device)
+    {
+        if (string.IsNullOrWhiteSpace(device.Name))
+            throw new ArgumentException("Device name cannot be empty.");
+
+        if (device is Smartwatch sw)
+        {
+            if (sw.BatteryLevel < 0 || sw.BatteryLevel > 100)
+                throw new ArgumentException("Battery level must be between 0 and 100.");
+            if (sw.BatteryLevel < 11)
+                sw.IsTurnedOn = false;
+        }
+        else if (device is PersonalComputer pc)
+        {
+            if (string.IsNullOrWhiteSpace(pc.OperatingSystem))
+            {
+                pc.IsTurnedOn = false;
+            }
+        }
+        else if (device is EmbeddedDevice ed)
+        {
+            if (ed.NetworkName != "MD Ltd.Wifi-1")
+                ed.IsTurnedOn = false;
         }
     }
 }
