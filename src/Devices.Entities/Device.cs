@@ -2,8 +2,8 @@
 
 public class Device
 {
-    string ID { get; set; }
-    string Name { get; set; }
-    bool IsTurnedOn { get; set; }
+    public string ID { get; set; }
+    public string Name { get; set; }
+    public bool IsTurnedOn { get; set; }
 }
 

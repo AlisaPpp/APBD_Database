@@ -1,23 +1,32 @@
+DROP TABLE Devices;
+DROP TABLE Smartwatches;
+DROP TABLE PersonalComputers;
+DROP TABLE EmbeddedDevices;
 
 CREATE TABLE Devices (
-                        Id NVARCHAR(5) PRIMARY KEY,
+                        Id NVARCHAR(20) PRIMARY KEY,
                         Name NVARCHAR(50),
-                        IsTurnedOn BIT,
-                        DeviceType NVARCHAR(50) NOT NULL 
+                        IsTurnedOn BIT
 );
 
 CREATE TABLE Smartwatches (
-                            DeviceId NVARCHAR(50) PRIMARY KEY FOREIGN KEY REFERENCES Devices(Id),
-                            BatteryLevel INT
+                            Id INT PRIMARY KEY IDENTITY(1, 1),
+                            BatteryLevel INT,
+                            DeviceId NVARCHAR(20) FOREIGN KEY REFERENCES Devices(Id)
+
 );
 
 CREATE TABLE PersonalComputers (
-                                DeviceId NVARCHAR(50) PRIMARY KEY FOREIGN KEY REFERENCES Devices(Id),
-                                OperatingSystem NVARCHAR(100)
+                                Id INT PRIMARY KEY IDENTITY(1, 1),
+                                OperatingSystem NVARCHAR(80),
+                                DeviceId NVARCHAR(20) FOREIGN KEY REFERENCES Devices(Id)
+
 );
 
 CREATE TABLE EmbeddedDevices (
-                                DeviceId NVARCHAR(50) PRIMARY KEY FOREIGN KEY REFERENCES Devices(Id),
-                                IpAddress NVARCHAR(50),
-                                NetworkName NVARCHAR(100)
+                                Id INT PRIMARY KEY IDENTITY(1, 1),
+                                IpAddress NVARCHAR(20),
+                                NetworkName NVARCHAR(50),
+                                DeviceId NVARCHAR(20) FOREIGN KEY REFERENCES Devices(Id)
+
 );

@@ -1,7 +1,7 @@
-INSERT INTO Devices (Id, Name, IsTurnedOn, DeviceType) VALUES
-    ('SW-1', 'Apple Watch SE6', 1, 'Smartwatch'),
-    ('P-1', 'MacBook Pro', 0, 'PersonalComputer'),
-    ('ED-1', 'Sensor Node 01', 1, 'EmbeddedDevice');
+INSERT INTO Devices (Id, Name, IsTurnedOn) VALUES
+    ('SW-1', 'Apple Watch SE6', 1),
+    ('P-1', 'MacBook Pro', 0),
+    ('ED-1', 'Sensor Node 01', 1);
 
 INSERT INTO Smartwatches (DeviceId, BatteryLevel) VALUES
     ('SW-1', 67);
