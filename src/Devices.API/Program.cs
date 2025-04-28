@@ -1,10 +1,11 @@
 using System.Text.Json.Nodes;
 using Devices.Entities;
 using Devices.Application;
+using Microsoft.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("UniversityDatabase");
+var connectionString = builder.Configuration.GetConnectionString("PersonalDatabase");
 
 builder.Services.AddTransient<IDeviceManager, DeviceManager>(_ => new DeviceManager(connectionString));
 
@@ -56,6 +57,8 @@ app.MapGet("/api/devices/{id}", (IDeviceManager deviceManager, string id) =>
 app.MapPost("/api/devices", async (HttpRequest request, IDeviceManager deviceManager) => 
 {
     string? contentType = request.ContentType?.ToLower();
+    using var connection = new SqlConnection(connectionString);
+    await connection.OpenAsync();
 
     switch (contentType)
     {
@@ -71,6 +74,8 @@ app.MapPost("/api/devices", async (HttpRequest request, IDeviceManager deviceMan
             string? deviceType = json["deviceType"]?.ToString();
             if (string.IsNullOrEmpty(deviceType))
                 return Results.BadRequest("Missing deviceType.");
+
+            string newId = await GenerateNextDeviceIdAsync(connection, deviceType);
 
             Device device;
             switch (deviceType)
@@ -103,7 +108,8 @@ app.MapPost("/api/devices", async (HttpRequest request, IDeviceManager deviceMan
                 default:
                     return Results.BadRequest("Unknown deviceType.");
                 }
-            
+
+            device.ID = newId;
             var success = deviceManager.CreateDevice(device);
             if (success)
                 return Results.Created($"/api/devices/{device.ID}", device);
@@ -125,7 +131,9 @@ app.MapPost("/api/devices", async (HttpRequest request, IDeviceManager deviceMan
 
             try
             {
+                string newId = await GenerateNextDeviceIdAsync(connection, deviceType);
                 Device device = DeviceFactory.CreateDevice(deviceType, deviceParts);
+                device.ID = newId;
 
                 var success = deviceManager.CreateDevice(device);
                 if (success)
@@ -249,6 +257,34 @@ app.MapDelete("/api/devices/{id}", (string id, IDeviceManager deviceManager) =>
     
     return Results.NotFound();
 });
+
+static async Task<string> GenerateNextDeviceIdAsync(SqlConnection connection, string deviceType)
+{
+    string prefix = deviceType switch
+    {
+        "SW" => "SW-",
+        "P" => "P-",
+        "ED" => "ED-",
+        _ => throw new Exception("Invalid device type")
+    };
+
+    var command = new SqlCommand(
+        @"SELECT MAX(CAST(SUBSTRING(Id, LEN(@Prefix) + 1, LEN(Id)) AS INT)) 
+          FROM Devices 
+          WHERE Id LIKE @Prefix + '%'", connection);
+
+    command.Parameters.AddWithValue("@Prefix", prefix);
+
+    object result = await command.ExecuteScalarAsync();
+
+    int nextNumber = 1; 
+    if (result != DBNull.Value && result != null)
+    {
+        nextNumber = (int)result + 1;
+    }
+
+    return $"{prefix}{nextNumber}";
+}
 
 
 app.Run();

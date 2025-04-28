@@ -130,9 +130,6 @@ public class DeviceManager : IDeviceManager
             IsTurnedOn = isTurnedOn
         };
     }
-
-
-
     
     public bool CreateDevice(Device device)
     {
@@ -147,7 +144,7 @@ public class DeviceManager : IDeviceManager
 
             try
             {
-                string insertDevice = "INSERT INTO Devices (Name, IsTurnedOn) VALUES (@Id, @Name, @IsTurnedOn)";
+                string insertDevice = "INSERT INTO Devices (Id, Name, IsTurnedOn) VALUES (@Id, @Name, @IsTurnedOn)";
 
                 using (SqlCommand command = new SqlCommand(insertDevice, connection, transaction))
                 {
@@ -161,7 +158,7 @@ public class DeviceManager : IDeviceManager
                 if (device is Smartwatch sw)
                 {
                     string insertSmartwatch =
-                        "INSERT INTO Smartwatch (DeviceId, BatteryLevel) VALUES (@DeviceId, @BatteryLevel)";
+                        "INSERT INTO Smartwatches (DeviceId, BatteryLevel) VALUES (@DeviceId, @BatteryLevel)";
                     using (SqlCommand command = new SqlCommand(insertSmartwatch, connection, transaction))
                     {
                         command.Parameters.AddWithValue("@DeviceId", device.ID);
@@ -172,7 +169,7 @@ public class DeviceManager : IDeviceManager
                 else if (device is PersonalComputer pc)
                 {
                     string insertPersonalComputer =
-                        "INSERT INTO PersonalComputer (DeviceId, OperatingSystem) VALUES (@DeviceId, @OperatingSystem)";
+                        "INSERT INTO PersonalComputers (DeviceId, OperatingSystem) VALUES (@DeviceId, @OperatingSystem)";
                     using (SqlCommand command = new SqlCommand(insertPersonalComputer, connection, transaction))
                     {
                         command.Parameters.AddWithValue("@DeviceId", device.ID);
@@ -183,7 +180,7 @@ public class DeviceManager : IDeviceManager
                 else if (device is EmbeddedDevice ed)
                 {
                     string insertEmbeddedDevice =
-                        "INSERT INTO EmbeddedDevice (DeviceId, NetworkName, IpAddress) VALUES (@DeviceId, @IpAddress, @NetworkName)";
+                        "INSERT INTO EmbeddedDevices (DeviceId, NetworkName, IpAddress) VALUES (@DeviceId, @IpAddress, @NetworkName)";
                     using (SqlCommand command = new SqlCommand(insertEmbeddedDevice, connection, transaction))
                     {
                         command.Parameters.AddWithValue("@DeviceId", device.ID);
@@ -233,7 +230,7 @@ public class DeviceManager : IDeviceManager
             if (device is Smartwatch sw)
             {
                 string updateSmartwatch =
-                    "UPDATE Smartwatch SET BatteryLevel = @BatteryLevel WHERE DeviceId = @DeviceId";
+                    "UPDATE Smartwatches SET BatteryLevel = @BatteryLevel WHERE DeviceId = @DeviceId";
                 using (SqlCommand command = new SqlCommand(updateSmartwatch, connection, transaction))
                 {
                     command.Parameters.AddWithValue("@DeviceId", sw.ID);
@@ -244,7 +241,7 @@ public class DeviceManager : IDeviceManager
             else if (device is PersonalComputer pc)
             {
                 string updatePersonalComputer =
-                    "UPDATE PersonalComputer SET OperatingSystem = @OperatingSystem WHERE DeviceId = @DeviceId";
+                    "UPDATE PersonalComputers SET OperatingSystem = @OperatingSystem WHERE DeviceId = @DeviceId";
                 using (SqlCommand command = new SqlCommand(updatePersonalComputer, connection, transaction))
                 {
                     command.Parameters.AddWithValue("@DeviceId", pc.ID);
@@ -255,7 +252,7 @@ public class DeviceManager : IDeviceManager
             else if (device is EmbeddedDevice ed)
             {
                 string updateEmbeddedDevice =
-                    "UPDATE EmbeddedDevice SET IpAddress = @IpAddress, NetworkName = @NetworkName WHERE DeviceId = @DeviceId";
+                    "UPDATE EmbeddedDevices SET IpAddress = @IpAddress, NetworkName = @NetworkName WHERE DeviceId = @DeviceId";
                 using (SqlCommand command = new SqlCommand(updateEmbeddedDevice, connection, transaction))
                 {
                     command.Parameters.AddWithValue("@DeviceId", device.ID);

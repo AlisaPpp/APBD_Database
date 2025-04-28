@@ -7,9 +7,24 @@ public class DeviceFactory
     {
         return type switch
         {
-            "SW" => new Smartwatch { ID = parts[0], Name = parts[1], BatteryLevel = int.Parse(parts[3].TrimEnd('%')), IsTurnedOn = bool.Parse(parts[2]) },
-            "P" => new PersonalComputer { ID = parts[0], Name = parts[1], IsTurnedOn = bool.Parse(parts[2]), OperatingSystem = parts.Length > 3 ? parts[3] : "" },
-            "ED" => new EmbeddedDevice { ID = parts[0], Name = parts[1], IpAddress = parts[2], NetworkName = parts[3] },
+            "SW" => new Smartwatch 
+            { 
+                Name = parts[0], 
+                IsTurnedOn = bool.Parse(parts[1]), 
+                BatteryLevel = int.Parse(parts[2]) 
+            },
+            "P" => new PersonalComputer 
+            { 
+                Name = parts[0], 
+                IsTurnedOn = bool.Parse(parts[1]), 
+                OperatingSystem = parts.Length > 2 ? parts[2] : "" 
+            },
+            "ED" => new EmbeddedDevice 
+            { 
+                Name = parts[0], 
+                IpAddress = parts[1], 
+                NetworkName = parts[2] 
+            },
             _ => throw new Exception("Unknown device type")
         };
     }
