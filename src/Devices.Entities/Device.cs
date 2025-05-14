@@ -5,5 +5,6 @@ public class Device
     public string ID { get; set; }
     public string Name { get; set; }
     public bool IsTurnedOn { get; set; }
+    public byte[] RowVersion { get; set; }
 }
 
